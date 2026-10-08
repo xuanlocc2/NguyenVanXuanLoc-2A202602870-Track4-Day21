@@ -54,16 +54,25 @@ Nêu khi nào hệ thống hoặc phương pháp fail, vì sao fail, và liên h
 
 ## 4. Khuyến nghị nếu triển khai thật
 
-Use-case cụ thể (ADAS / robot / drone), trade-off và bước tiếp theo.
+**Use-case:** xe tự lái / ADAS dùng LiDAR + camera. Khung gầm rung và va chạm nhẹ có thể làm giá đỡ cảm biến bị lệch vài phần mười độ mà không ai nhận ra, trong khi detector vẫn chạy bình thường.
 
-[ĐIỀN]
+- **Kiểm tra alignment mỗi lần khởi động và định kỳ khi chạy:** với các vật hẹp mà detector ảnh nhận ra (người đi bộ, cột), đo tỉ lệ điểm LiDAR nằm trong 2D box. Cảnh báo khi tỉ lệ trung vị xuống dưới 90% trên ít nhất 3 frame liên tiếp. Với KITTI, ngưỡng này bắt được lệch yaw khoảng 0.5° ở người đi bộ (84.2%) nhưng chỉ bắt được xe con khi lệch tới trên 3° (87.2%), nên phải ưu tiên vật hẹp làm "vật thử".
+- **Đánh đổi:** ngưỡng 90% chỉ cách mức sàn của người đi bộ (95.9% khi calibration đúng) khoảng 6 điểm phần trăm, nên dễ báo nhầm nếu ít mẫu hoặc 2D box lệch. Cần đủ số điểm (khuyến nghị ít nhất 30–50 điểm trên mỗi vật) và gộp theo trung vị. Cách này phụ thuộc detector ảnh nên không dùng được ban đêm hoặc khi camera mù.
+- **Chỉ số cần ghi log:** hit_ratio trung vị theo class và theo khoảng cách (0–15 / 15–30 / trên 30 m), số điểm dùng để tính, độ lệch thời gian LiDAR-camera. Không dùng "% điểm nằm trong ảnh" làm chỉ số sức khoẻ vì nó gần như không đổi khi lệch (xem mục 3).
+- **Bước tiếp theo:** thử trên nuScenes (LiDAR thưa hơn, có lệch thời gian), thêm kiểm tra lệch tịnh tiến, và đo ngưỡng trên nhiều frame hơn: hiện chỉ có 4 frame KITTI nên các số trên chưa đủ để chốt ngưỡng sản phẩm.
 
 ## 5. Cách chạy lại
 
-Các lệnh tái tạo lại toàn bộ kết quả từ repo sạch.
+Các lệnh tái tạo lại toàn bộ kết quả từ repo sạch (đã kiểm tra trên Windows, Python 3.13).
 
 ```bash
-[ĐIỀN]
+python -m venv .venv && source .venv/Scripts/activate   # Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+python tools/verify_data.py --data-root data/kitti_mini
+python -m starter.projection --data-root data/kitti_mini --frame 000011   # ảnh demo overlay, ra results/figures/
+python -m src.exp_yaw_sweep      # results/yaw_perturb_sweep.csv, results/yaw_by_group.csv
+python -m src.plot_yaw_sweep     # results/figures/yaw_sweep.png
+python -m src.yaw_failure        # results/fail_yaw_objects.csv, results/figures/fail_01_yaw_pedestrian.png
 ```
 
 ## 6. Khai báo sử dụng AI
@@ -72,4 +81,5 @@ Ghi rõ đã dùng công cụ AI nào, dùng vào việc gì, và bạn đã t�
 
 | Công cụ | Dùng cho việc gì | Bạn đã kiểm chứng thế nào |
 |---|---|---|
-| [ĐIỀN] | | |
+| Claude Code (Claude Sonnet 5.5) | Fork repo, cài môi trường, viết 2 hàm TODO trong `starter/projection.py`, viết `src/yaw_failure.py`, `src/exp_yaw_sweep.py`, `src/plot_yaw_sweep.py`, soạn nội dung REPORT | Số liệu 3 frame 000008/000011/000049 khớp bảng kỳ vọng của đề; điểm (10,0,0) ra pixel (614,175); chạy lại thí nghiệm hai lần ra file CSV giống hệt; xem ảnh failure bằng mắt |
+| Script mẫu của codelab (Phần 05) | `src/exp_yaw_sweep.py` và `src/plot_yaw_sweep.py` lấy làm điểm xuất phát | Mở rộng: tách kết quả theo class và khoảng cách, thêm frame 000015, thêm `results/yaw_by_group.csv` |
