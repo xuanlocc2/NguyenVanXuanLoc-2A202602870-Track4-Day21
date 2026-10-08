@@ -4,7 +4,7 @@
 
 - **Họ tên:** Nguyễn Văn Xuân Lộc
 - **MSSV:** 2A202602870 (phải trùng với MSSV trong tên repo `<HoVaTen>-<MSSV>-Track4-Day21`)
-- **Lớp:** AI20K-T4
+- **Lớp:** AI20K-Track4
 - **Link repo:** https://github.com/xuanlocc2/NguyenVanXuanLoc-2A202602870-Track4-Day21
 - **Topic:** A — LiDAR-camera projection QA
 - **Dataset:** data/kitti_mini
@@ -97,6 +97,7 @@ python -m venv .venv && source .venv/Scripts/activate   # Linux/macOS: source .v
 pip install -r requirements.txt
 python tools/verify_data.py --data-root data/kitti_mini
 python -m starter.projection --data-root data/kitti_mini --frame 000011   # ảnh demo overlay, ra results/figures/
+python -m src.test_projection   # kiểm tra 2 hàm TODO, in OK
 python -m src.exp_yaw_sweep      # results/yaw_perturb_sweep.csv, results/yaw_by_group.csv
 python -m src.plot_yaw_sweep     # results/figures/yaw_sweep.png
 python -m src.yaw_failure        # results/fail_yaw_objects.csv, results/figures/fail_01_yaw_pedestrian.png
