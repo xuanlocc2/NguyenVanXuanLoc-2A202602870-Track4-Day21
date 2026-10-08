@@ -8,7 +8,7 @@
 - **Link repo:** https://github.com/xuanlocc2/NguyenVanXuanLoc-2A202602870-Track4-Day21
 - **Topic:** A — LiDAR-camera projection QA
 - **Dataset:** data/kitti_mini
-- **Các frame đã dùng:** 000008, 000011, 000015
+- **Các frame đã dùng:** 000008, 000011, 000015, 000049
 
 > Hãy viết ngắn: mỗi mục từ 3 đến 8 dòng, ưu tiên số liệu và hình ảnh.
 
@@ -22,11 +22,23 @@ Lệch yaw 1° làm tỉ lệ điểm LiDAR của người đi bộ rơi đúng 
 
 Bảng hoặc plot số liệu, kèm ảnh/video demo. Ghi rõ đường dẫn file trong `results/`.
 
-| Cấu hình / mức perturb | Metric 1 | Metric 2 | Ghi chú |
-|---|---|---|---|
-| [ĐIỀN] | | | |
+Metric: % điểm LiDAR nằm trong 3D box của vật thể (theo calib gốc) mà sau khi chiếu bằng calib bị lệch yaw vẫn rơi vào 2D box của label. Dữ liệu: `results/yaw_perturb_sweep.csv` (theo frame), `results/yaw_by_group.csv` (theo class và khoảng cách). Mỗi lần chỉ đổi yaw, không có phép ngẫu nhiên, chạy lại hai lần ra file giống hệt nhau.
 
-![demo](../results/figures/[ĐIỀN].png)
+| Lệch yaw | 000008 (đông xe) | 000011 (nhiều người đi bộ) | 000015 (người đi bộ) | 000049 (nhiều vật bị che) | Pedestrian (gộp) | Car (gộp) |
+|---|---|---|---|---|---|---|
+| 0° | 99.6% | 99.5% | 98.0% | 99.3% | 95.9% | 99.7% |
+| 0.5° | 99.6% | 91.9% | 92.6% | 97.5% | 84.2% | 99.2% |
+| 1° | 98.6% | 77.4% | 86.2% | 93.5% | 68.7% | 97.4% |
+| 2° | 94.8% | 45.4% | 78.4% | 84.7% | 45.6% | 92.6% |
+| 3° | 91.0% | 21.2% | 73.3% | 74.3% | 29.0% | 87.2% |
+
+![yaw sweep](../results/figures/yaw_sweep.png)
+
+![demo](../results/figures/overlay_000011_r0.0_p0.0_y0.0_t0.0_0.0_0.0.png)
+
+- Claim được xác nhận ở dạng gộp: ở 1°, người đi bộ giảm 27.2 điểm phần trăm (95.9% → 68.7%), xe con chỉ giảm 2.3 điểm (99.7% → 97.4%). Theo frame: 000011 giảm 22.0 điểm, 000008 giảm 1.0 điểm.
+- Theo khoảng cách (gộp mọi class), ở 1°: vật 0–15 m còn 96.7%, vật 15–30 m còn 82.0%, vật trên 30 m còn 79.1%, vì lệch góc làm điểm trượt khoảng 12.6 px/độ bất kể khoảng cách trong khi vật xa nhỏ hơn trên ảnh.
+- Mức sàn ở 0° là 98–99.6% theo frame (95.9% với người đi bộ) do label do người vẽ không khớp tuyệt đối, nên ngưỡng cảnh báo nên đặt khoảng 90%: người đi bộ (gộp) đã xuống dưới ngưỡng này ở 0.5° (84.2%), còn frame đông xe 000008 vẫn trên 90% đến tận 3° (91.0%).
 
 ## 3. Failure case
 
