@@ -32,9 +32,13 @@ Bảng hoặc plot số liệu, kèm ảnh/video demo. Ghi rõ đường dẫn f
 
 Nêu khi nào hệ thống hoặc phương pháp fail, vì sao fail, và liên hệ tới lớp nào trong 6 lớp debug: I/O, Geometry, Time, Preprocess, Model, Metric.
 
-![failure](../results/figures/fail_[ĐIỀN].png)
+![failure](../results/figures/fail_01_yaw_pedestrian.png)
 
-[ĐIỀN]
+- **Trường hợp:** KITTI, frame 000011, người đi bộ thứ 6 (obj 5) ở 15.9 m, 2D box rộng 27.7 px, 81 điểm LiDAR. Chiếu bằng calib lệch yaw 0° / 0.5° / 1° / 2°.
+- **Quan sát:** tỉ lệ điểm nằm trong 2D box giảm 100% → 81% → 35% → 0% (yaw 0 / 0.5 / 1 / 2°). Ở 2° cả cụm điểm trượt sang trái, nằm hoàn toàn ngoài box (ảnh bên phải). Người ở 34 m (box 15.3 px) mất 92 điểm phần trăm chỉ với 1°. Kết quả sơ bộ: mức giảm phụ thuộc bề rộng box trên ảnh chứ không phụ thuộc loại vật. Xe ở 33 m (box 51 px) cũng mất 24 điểm phần trăm ở 1°, còn xe gần (box ≥ 123 px) mất dưới 2 điểm phần trăm. Số liệu: `results/fail_yaw_objects.csv`.
+- **Nguyên nhân:** xoay yaw θ làm điểm trượt khoảng f·tan(θ) pixel, gần như không đổi theo khoảng cách (f = 721.5 px: 1° ≈ 12.6 px, 2° ≈ 25.2 px), mà người đi bộ chỉ rộng 27.7 px nên 2° đủ đẩy cả cụm điểm ra ngoài box.
+- **Lớp debug:** Geometry (extrinsic `Tr_velo_to_cam` sai). Kèm lớp Metric: "số điểm nằm trong ảnh" gần như không đổi khi lệch (data/synthetic, frame 000000: 3910 → 3956 ở yaw 2°), nên không phát hiện được lỗi này.
+- **Cách phát hiện khi chạy thật:** theo dõi tỉ lệ điểm LiDAR nằm trong 2D box của vật mà detector ảnh phát hiện được (người đi bộ, cột), cảnh báo khi giảm dưới 90% so với lúc mới calibrate. Không dùng "% điểm nằm trong ảnh" làm chỉ số cảnh báo.
 
 ## 4. Khuyến nghị nếu triển khai thật
 
