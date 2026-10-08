@@ -50,7 +50,7 @@ Metric: % điểm LiDAR nằm trong 3D box của vật thể (theo calib gốc) 
 | Nhiễu σ = 0.05 m | 99.3% | 76.8% | 44.6% | 676 |
 | Nhiễu σ = 0.1 m | 98.3% | 74.9% | 42.8% | 591 |
 
-Phép đo vẫn phân biệt được yaw 0° với 1° (giảm 15 đến 20 điểm phần trăm) ngay cả khi chỉ giữ 30% điểm, vì hit_ratio là tỉ lệ nên ít nhạy với số điểm. Khi giữ ít điểm, nó nhiễu hơn (chỉ còn 215 điểm trên vật, nên chênh lệch 77.4% so với 84.8% ở yaw 1° là dao động lấy mẫu, không phải xu hướng). Nhiễu 0.1 m làm mức sàn ở 0° giảm từ 99.4% xuống 98.3% và làm mất khoảng 18% số điểm trên vật do điểm nhiễu rơi ra ngoài 3D box (box được chọn trên điểm đã nhiễu).
+Phép đo vẫn phân biệt được yaw 0° với 1° (giảm 15 đến 22 điểm phần trăm) ngay cả khi chỉ giữ 30% điểm, vì hit_ratio là tỉ lệ nên ít nhạy với số điểm. Khi giữ ít điểm, nó nhiễu hơn (chỉ còn 215 điểm trên vật, nên chênh lệch 77.4% so với 84.8% ở yaw 1° là dao động lấy mẫu, không phải xu hướng). Nhiễu 0.1 m làm mức sàn ở 0° giảm từ 99.4% xuống 98.3% và làm mất khoảng 18% số điểm trên vật do điểm nhiễu rơi ra ngoài 3D box (box được chọn trên điểm đã nhiễu).
 
 **[B3]** Latency (`results/b3_latency.csv`): hàm chiếu 108 nghìn điểm KITTI frame 000011 rồi đếm điểm trong box (không tính đọc file), 21 lần chạy, bỏ lần đầu: **p50 = 35.5 ms, p95 = 38.4 ms**. Máy: AMD Ryzen 9 6900HS, 15.2 GB RAM, chỉ chạy CPU (numpy, không GPU). Với p50 này, kiểm tra alignment 1 frame mỗi giây vẫn dùng rất ít tài nguyên.
 
