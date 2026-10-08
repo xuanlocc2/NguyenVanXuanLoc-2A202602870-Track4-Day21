@@ -40,6 +40,33 @@ Metric: % điểm LiDAR nằm trong 3D box của vật thể (theo calib gốc) 
 - Theo khoảng cách (gộp mọi class), ở 1°: vật 0–15 m còn 96.7%, vật 15–30 m còn 82.0%, vật trên 30 m còn 79.1%, vì lệch góc làm điểm trượt khoảng 12.6 px/độ bất kể khoảng cách trong khi vật xa nhỏ hơn trên ảnh.
 - Mức sàn ở 0° là 98–99.6% theo frame (95.9% với người đi bộ) do label do người vẽ không khớp tuyệt đối, nên ngưỡng cảnh báo nên đặt khoảng 90%: người đi bộ (gộp) đã xuống dưới ngưỡng này ở 0.5° (84.2%), còn frame đông xe 000008 vẫn trên 90% đến tận 3° (91.0%).
 
+**[B2]** Stress test suy giảm dữ liệu (`results/b2_degradation.csv`, `src/exp_bonus.py`): random dropout giữ 100 / 70 / 50 / 30% điểm và nhiễu Gaussian σ = 0 / 0.02 / 0.05 / 0.1 m (seed = 0), mỗi mức chạy với yaw 0 / 1 / 2°, trên frame 000008 và 000011. hit_ratio ở frame 000011:
+
+| Suy giảm | hit_ratio yaw 0° | yaw 1° | yaw 2° | Số điểm trên vật (yaw 0°) |
+|---|---|---|---|---|
+| Không suy giảm | 99.4% | 77.4% | 45.4% | 725 |
+| Giữ 50% điểm | 99.7% | 81.4% | 48.1% | 370 |
+| Giữ 30% điểm | 100.0% | 84.8% | 49.1% | 215 |
+| Nhiễu σ = 0.05 m | 99.3% | 76.8% | 44.6% | 676 |
+| Nhiễu σ = 0.1 m | 98.3% | 74.9% | 42.8% | 591 |
+
+Phép đo vẫn phân biệt được yaw 0° với 1° (giảm 15 đến 20 điểm phần trăm) ngay cả khi chỉ giữ 30% điểm, vì hit_ratio là tỉ lệ nên ít nhạy với số điểm. Khi giữ ít điểm, nó nhiễu hơn (chỉ còn 215 điểm trên vật, nên chênh lệch 77.4% so với 84.8% ở yaw 1° là dao động lấy mẫu, không phải xu hướng). Nhiễu 0.1 m làm mức sàn ở 0° giảm từ 99.4% xuống 98.3% và làm mất khoảng 18% số điểm trên vật do điểm nhiễu rơi ra ngoài 3D box (box được chọn trên điểm đã nhiễu).
+
+**[B3]** Latency (`results/b3_latency.csv`): hàm chiếu 108 nghìn điểm KITTI frame 000011 rồi đếm điểm trong box (không tính đọc file), 21 lần chạy, bỏ lần đầu: **p50 = 35.5 ms, p95 = 38.4 ms**. Máy: AMD Ryzen 9 6900HS, 15.2 GB RAM, chỉ chạy CPU (numpy, không GPU). Với p50 này, kiểm tra alignment 1 frame mỗi giây vẫn dùng rất ít tài nguyên.
+
+**[B5]** So sánh KITTI và nuScenes (`results/b5_kitti_vs_nuscenes.csv`), hit_ratio theo yaw:
+
+| Frame | 0° | 0.5° | 1° | 2° | 3° | Số điểm trên vật (0°) |
+|---|---|---|---|---|---|---|
+| KITTI 000008 | 99.6% | 99.6% | 98.6% | 94.8% | 91.0% | 5127 |
+| KITTI 000011 | 99.4% | 91.9% | 77.4% | 45.4% | 21.2% | 725 |
+| nuScenes scene-0103_010 (ngày) | 100% | 97.0% | 90.7% | 75.0% | 65.2% | 100 |
+| nuScenes scene-0103_020 (ngày) | 100% | 97.6% | 95.3% | 86.9% | 78.0% | 243 |
+| nuScenes scene-1094_010 (đêm) | 100% | 100% | 96.7% | 86.4% | 75.2% | 359 |
+| nuScenes scene-1094_020 (đêm) | 100% | 92.5% | 86.7% | 73.8% | 63.2% | 90 |
+
+Tiêu cự nuScenes (1253–1266 px) lớn hơn KITTI (721 px) khoảng 1.74 lần, nên cùng lệch 1° điểm trượt 21.9 px thay vì 12.6 px, nhưng ảnh nuScenes cũng rộng hơn và vật cũng chiếm nhiều pixel hơn. Tỉ số độ trượt so với bề rộng vật là θ·z/W, trong đó f triệt tiêu, nên khác biệt giữa hai dataset đến từ tập vật thể (khoảng cách, kích thước), không đến từ tiêu cự. nuScenes ít điểm trên vật hơn nhiều (90–359 điểm so với 725–5127 do LiDAR 32 beam), nên kết quả có nhiễu lấy mẫu lớn hơn. Mức sàn 100% ở 0° của nuScenes khác KITTI (98–99.6%); tôi chưa kiểm chứng nhưng nhiều khả năng do cách tạo 2D box của hai dataset khác nhau. Chưa phân tách được ảnh hưởng của ban ngày so với ban đêm, vì mỗi điều kiện chỉ có 2 frame và số điểm trên vật dao động rất mạnh giữa các frame.
+
 ## 3. Failure case
 
 Nêu khi nào hệ thống hoặc phương pháp fail, vì sao fail, và liên hệ tới lớp nào trong 6 lớp debug: I/O, Geometry, Time, Preprocess, Model, Metric.
@@ -73,6 +100,7 @@ python -m starter.projection --data-root data/kitti_mini --frame 000011   # ản
 python -m src.exp_yaw_sweep      # results/yaw_perturb_sweep.csv, results/yaw_by_group.csv
 python -m src.plot_yaw_sweep     # results/figures/yaw_sweep.png
 python -m src.yaw_failure        # results/fail_yaw_objects.csv, results/figures/fail_01_yaw_pedestrian.png
+python -m src.exp_bonus          # bonus B2, B3, B5: results/b2_degradation.csv, b3_latency.csv, b5_kitti_vs_nuscenes.csv
 ```
 
 ## 6. Khai báo sử dụng AI
